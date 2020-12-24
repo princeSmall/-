@@ -12,7 +12,7 @@
 
 @interface CollectionView()<UICollectionViewDelegate,UICollectionViewDataSource>
 @property (nonatomic, strong) NSArray *dataArray;
-@property (nonatomic, assign) NSInteger index;
+
 @property (nonatomic, assign) BOOL isUpdate;
 @end
 
@@ -23,31 +23,18 @@
         self.dataSource = self;
         self.delegate = self;
         self.backgroundColor = [UIColor whiteColor];
-        self.index = 3;
         [self registerClass:[CollectionViewCell class] forCellWithReuseIdentifier:@"cell"];
     }
     return self;
 }
 
-/*
- * 处理拖拽滚动到首尾的时候
- */
-- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView{
-    
-    /* 滚动到尾部 ：60:item的宽度 + 10:间距 - 当前视图宽度 - 10：间距 = 已滚动区域 */
-    CGFloat scrollX = 70 *self.dataArray.count - self.frame.size.width - 10;
-    if (scrollView.contentOffset.x == 0) {
-        self.index = 3;
-         [self reloadData];
-        [self scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:self.index inSection:0] atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:YES];
-    }else if (scrollView.contentOffset.x == scrollX){
-        self.index = self.dataArray.count - 4;
-        [self reloadData];
-        [self scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:self.index inSection:0] atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:YES];
-    }
-//    NSLog(@"%.2f",60 *self.dataArray.count - self.frame.size.width);
-//    NSLog(@"%.2f",scrollView.contentOffset.x);
+- (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
+    NSInteger currentPage = ((*targetContentOffset).x) / 70;
+    self.index = currentPage + 3;
+    [self reloadData];
 }
+
+
 #pragma mark -UICollectionViewDataSource
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     
@@ -73,6 +60,9 @@
         self.index = indexPath.row;
         [self reloadData];
       [self scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:YES];
+        if (self.touchDelegate && [self.touchDelegate respondsToSelector:@selector(controlScrollViewContentOffset:)]) {
+            [self.touchDelegate controlScrollViewContentOffset:self.index - 3];
+        }
     }
    
 }
